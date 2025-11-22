@@ -1,39 +1,45 @@
 import express from "express";
+import session from "express-session";
 import dotenv from "dotenv";
-import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import shopifyRoutes from "./routes/shopify.js";
+
+
+import authRoutes from "./routes/auth.js";
+import invoiceRoutes from "./routes/invoice.js";
 
 
 dotenv.config();
 
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-
-// Resolve directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-// Set template engine (for invoice)
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "templates"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
 
 
-// Routes
-app.use("/", shopifyRoutes);
+app.use(
+session({
+secret: process.env.SESSION_SECRET || "secret123",
+resave: false,
+saveUninitialized: true,
+})
+);
 
 
-// Default route
+// ROUTES
+app.use("/auth", authRoutes);
+app.use("/invoice", invoiceRoutes);
+
+
 app.get("/", (req, res) => {
-res.send("GST Invoice App Running Successfully ✔");
+res.send("Shopify GST Invoice App is running.");
 });
 
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
